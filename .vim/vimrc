@@ -1,0 +1,75 @@
+" plugins
+let g:plug_window = "new"
+call plug#begin(expand("<sfile>:h").."/plugged")
+	Plug 'neoclide/coc.nvim', {'branch': 'release'}
+	Plug 'jiangmiao/auto-pairs'
+	Plug 'luochen1990/rainbow'
+	let g:rainbow_active = 1
+call plug#end()
+
+
+set tabstop=4
+set shiftwidth=0
+set linebreak
+set breakindent
+set number
+set splitbelow
+let g:netrw_banner = 0
+
+" colors
+set termguicolors
+set background=dark
+colorscheme gruvbox
+
+" undo
+set undofile
+let $undodir = expand("<sfile>:h").."/undo"
+if !isdirectory($undodir)
+	call mkdir($undodir, "", 0700)
+endif
+set undodir=$undodir
+
+
+autocmd TerminalOpen * setlocal nonu
+autocmd FileType cpp,c setlocal signcolumn=yes
+
+" mappings
+let mapleader = " "
+map <silent> <leader>c :call DoCommand("compile_"..&ft)<CR>
+map <silent> <leader>r :call DoCommand("run_"..&ft)<CR>
+map <silent> <leader>d :call DoCommand("debug")<CR>
+map <silent> <leader>e :call CloseTerminal()<CR>
+
+
+function DoCommand(command)
+	let cmd = {
+	\	"compile_c": "cc -v -g -Wall -o %:t:r:S %:t:S",
+	\	"run_c": "./%:t:r:S",
+	\	"compile_cpp": "c++ -v -g -Wall -o %:t:r:S %:t:S",
+	\	"run_cpp": "./%:t:r:S",
+	\	"run_python": "python3 %:t:S",
+	\	"run_sh": "sh %:t:S",
+	\	"debug": "lldb %:t:r:S"
+	\}
+
+	if exists("cmd[a:command]")
+		call CloseTerminal()
+		let dir = substitute(expand("%:~:.:h:S"), "'\\\~\/", "\\\~\/'", "")
+		if has("terminal")
+			execute "up | term ++rows=10 sh -c \"cd" dir "&&" cmd[a:command].."\""
+		else
+			execute "up | !sh -c \"cd" dir "&&" cmd[a:command].."\""
+		endif
+	endif
+endfunction
+
+" force closes one terminal window
+function CloseTerminal()
+	if has("terminal")
+		let buf = uniq(map(filter(getwininfo(),
+			\"v:val.terminal"), "v:val.bufnr"))
+		if len(buf) != 0
+			execute "bd!" buf[-1]
+		endif
+	endif
+endfunction

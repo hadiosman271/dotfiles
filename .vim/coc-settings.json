@@ -1,0 +1,10 @@
+{
+	"diagnostic.refreshOnInsertMode": true,
+	"semanticTokens.enable": true,
+	"inlayHint.enable": false,
+	"clangd.compilationDatabaseCandidates": [".", "build"],
+	"clangd.arguments": [
+		"--header-insertion=never",
+		"--background-index=false"
+	]
+}
