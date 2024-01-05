@@ -68,14 +68,12 @@ if [ "$color_prompt" = yes ]; then
 
 	# save exit status
 	PS1="\$(exit=\$?;"
-	# add a newline if none
-	#printf \"%\$((\$COLUMNS - 1))s\r\";"
 	# show success or failure
 	PS1+="[[ \$exit = 0 ]] && echo \"$green\"O || echo \"$red\"X)"
 	# normal prompt
 	PS1+="${debian_chroot:+($debian_chroot)}$grey($blue\u@\h$reset:$yellow\W$grey)"
 	# git branch
-	PS1+="\$(__git_ps1 \"$grey($orange%s$grey)\")"
+	#PS1+="\$(__git_ps1 \"$grey($orange%s$grey)\")"
 	PS1+="$reset\$ "
 else
     PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
@@ -140,17 +138,13 @@ if ! shopt -oq posix; then
   fi
 fi
 
-export PATH=$PATH:/home/abdulhadi/.local/bin
 export EDITOR=nvim
-export BROWSER="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"
 
-export documents='/mnt/c/Users/Abdulhadi/Documents'
-
+alias vi="nvim"
+alias du="du -sh"
 alias py="python3"
 alias ipy="ipython"
 alias python="python3"
-alias vi="nvim"
-alias vim="nvim"
-alias du="du -sh"
 
-. "$HOME/.cargo/env"
+#. "$HOME/.cargo/env"
+#export PATH=$PATH:$HOME/.local/bin
