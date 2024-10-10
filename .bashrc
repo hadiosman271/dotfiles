@@ -73,7 +73,7 @@ if [ "$color_prompt" = yes ]; then
 	# normal prompt
 	PS1+="${debian_chroot:+($debian_chroot)}$grey($blue\u@\h$reset:$yellow\W$grey)"
 	# git branch
-	#PS1+="\$(__git_ps1 \"$grey($orange%s$grey)\")"
+	PS1+="\$(__git_ps1 \"$grey($orange%s$grey)\")"
 	PS1+="$reset\$ "
 else
     PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
@@ -138,13 +138,32 @@ if ! shopt -oq posix; then
   fi
 fi
 
+## extra
+
+shopt -u progcomp
+stty -ixon
+
 export EDITOR=nvim
 
 alias vi="nvim"
 alias du="du -sh"
-alias py="python3"
-alias ipy="ipython"
-alias python="python3"
+alias r="ranger"
+alias cdr="source ranger ranger"
 
+# python
+#export PATH="$PATH:$HOME/.local/bin"
+#alias py="python3"
+#alias ipy="ipython"
+#alias python="python3"
+
+## rust
 #. "$HOME/.cargo/env"
-#export PATH=$PATH:$HOME/.local/bin
+#alias rs="evcxr"
+#
+## zig
+##export PATH="$PATH:/usr/local/zig-0.11.0"
+#export PATH="$PATH:/usr/local/zig-0.13.0"
+#
+## golang
+#export PATH="$PATH:/usr/local/go/bin"
+#export PATH="$PATH:$HOME/.go/bin"
