@@ -23,8 +23,43 @@ vim.opt.timeoutlen = 300
 
 -- general keymaps
 vim.g.mapleader = " "
-vim.keymap.set("n", "<leader>s", vim.cmd.up)
-vim.keymap.set("n", "<leader>c", ":tabe term://")
+vim.keymap.set("n", "<C-s>", vim.cmd.up)
+vim.keymap.set("n", "<leader>c", ":tabnew term://")
+vim.keymap.set("n", "<tab>", "gt")
+vim.keymap.set("n", "<s-tab>", "gT")
+-- swap gf,gF with <C-w> ones
+--vim.keymap.set("n", "gf", "<C-w>gf", {noremap = true}) -- why does this have no effect?
+vim.keymap.set("n", "gf", "<C-w>gf")
+vim.keymap.set("n", "<C-w>gf", "gf")
+vim.keymap.set("n", "gF", "<C-w>gF")
+vim.keymap.set("n", "<C-w>gF", "gF")
+
+-- make v_gF behave as expected, not like v_gf
+-- file:100
+vim.api.nvim_create_user_command(
+	"GF",
+	function(cmd)
+		local v_start = vim.fn.getpos("'<")
+		local v_end = vim.fn.getpos("'>")
+		local text = table.concat(vim.api.nvim_buf_get_text(0, v_start[2] - 1, v_start[3] - 1, v_end[2] - 1, v_end[3] - 1, {}))
+		-- FIXME: use vim.o.isfname somehow
+		local split = vim.gsplit(text, ":", {})
+		local file = split()
+		if file == nil then file = text end
+		local line_str = split()
+		if line_str == nil then
+			line_str = ""
+		else
+			line_str = "+"..tonumber(line_str)
+		end
+		-- can't do vim.cmd.tabfind with +line yet
+		-- https://github.com/neovim/neovim/issues/21687
+		vim.cmd("tabfind "..line_str.." "..file)
+		--vim.cmd.lua("vim.print(\""..line_str.." "..file.."\")")
+	end,
+	{ range = true }
+)
+vim.keymap.set("v", "gF", vim.cmd.GF)
 
 
 -- buffer specific options and keymaps
@@ -52,12 +87,34 @@ vim.api.nvim_create_autocmd("FileType", {
 		end, { buffer = 0, silent = 1 })
 	end
 })
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = { "java" },
+	callback = function()
+		vim.opt_local.expandtab = true
+	end
+})
 
 
 -- netrw
 vim.keymap.set("n", "<leader>d", vim.cmd.Ex)
 vim.g.netrw_banner = 0
 vim.g.netrw_liststyle = 3
+
+
+-- for my nvim-remote script
+vim.api.nvim_create_user_command(
+	"Tabnew",
+	function(cmd)
+		if cmd.args == "" then return end
+		if vim.fn.bufname() == "" then
+			vim.cmd.edit(cmd.args)
+		else
+			vim.cmd.tabnew(cmd.args)
+		end
+	end,
+	{ nargs = "*", complete = "file" }
+)
+vim.g.grep_colors = "sl=37"
 
 
 -- lazy.nvim
@@ -81,30 +138,37 @@ require("lazy").setup({
 	"jiangmiao/auto-pairs",
 	"HiPhish/rainbow-delimiters.nvim",
 	"mbbill/undotree",
-	--{ "nvim-telescope/telescope.nvim", tag = "0.1.2", dependencies = { "nvim-lua/plenary.nvim" } },
 	{ "nvim-treesitter/nvim-treesitter", build = vim.cmd.TSUpdate },
-	{
-		"VonHeikemen/lsp-zero.nvim",
-		branch = "v2.x",
-		dependencies = {
-			-- LSP Support
-			{ "neovim/nvim-lspconfig" },             -- Required
-			{ "williamboman/mason.nvim" },           -- Optional
-			{ "williamboman/mason-lspconfig.nvim" }, -- Optional
+	--{ "nvim-telescope/telescope.nvim", tag = "0.1.2", dependencies = { "nvim-lua/plenary.nvim" } },
+	"tpope/vim-fugitive",
+	--{ "francoiscabrol/ranger.vim", dependencies = { "rbgrouleff/bclose.vim" } },
+	--{
+	--	"VonHeikemen/lsp-zero.nvim",
+	--	branch = "v2.x",
+	--	dependencies = {
+	--		-- LSP Support
+	--		{ "neovim/nvim-lspconfig" },             -- Required
+	--		{ "williamboman/mason.nvim" },           -- Optional
+	--		{ "williamboman/mason-lspconfig.nvim" }, -- Optional
 
-			-- Autocompletion
-			{ "hrsh7th/nvim-cmp" },     -- Required
-			{ "hrsh7th/cmp-nvim-lsp" }, -- Required
-			{ "L3MON4D3/LuaSnip" },     -- Required
-		}
-	},
+	--		-- Autocompletion
+	--		{ "hrsh7th/nvim-cmp" },     -- Required
+	--		{ "hrsh7th/cmp-nvim-lsp" }, -- Required
+	--		{ "L3MON4D3/LuaSnip" },     -- Required
+	--	}
+	--},
+	--"lervag/vimtex"
 })
+
+
+-- vimtex
+vim.g.vimtex_syntax_enabled = 0
 
 
 -- catppuccin
 require("catppuccin").setup({
     transparent_background = true,
-    term_colors = true,
+    term_colors = false,
 	no_italic = true,
     integrations = {
 		treesitter = true,
@@ -131,16 +195,19 @@ vim.g.undotree_RelativeTimestamp = 0
 --	pickers = { find_files = { hidden = true } }
 --})
 --
---vim.keymap.set("n", "<leader>ff", require("telescope.builtin").find_files)
---vim.keymap.set("n", "<leader>fs", require("telescope.builtin").treesitter)
+--vim.keymap.set("n", "<leader>f", require("telescope.builtin").find_files)
+--vim.keymap.set("n", "<leader>g", require("telescope.builtin").treesitter)
 
 
 -- treesitter
 require('nvim-treesitter.configs').setup({
 	ensure_installed = {
-		"c", "cpp", "rust",
+		"lua", "vim", "vimdoc",
+		"c", "cpp", "rust", "zig",
+		"glsl", "wgsl",
 		"javascript", "html", "css",
-		"lua", "vim", "vimdoc", "wgsl",
+		"java",
+		"markdown"
 	},
 	sync_install = false,
 	auto_install = false,
@@ -163,45 +230,45 @@ require('nvim-treesitter.configs').setup({
 
 
 -- lsp
-local lsp = require("lsp-zero").preset({})
-
-lsp.on_attach(function(client, bufnr)
-  vim.opt.signcolumn = "yes"
-  -- see :help lsp-zero-keybindings
-  lsp.default_keymaps({buffer = bufnr})
-end)
-
-lsp.ensure_installed({
-	"clangd",
-	"rust_analyzer",
-	"lua_ls",
-})
-
-lsp.set_sign_icons({
-	error = 'x',
-	warn  = '!',
-	hint  = '*',
-	info  = '>'
-})
-
-vim.diagnostic.config({
-	virtual_text = false,
-	update_in_insert = true,
-})
-
-require("lspconfig").rust_analyzer.setup({
-	settings = { ["rust-analyzer"] = {
-		cargo = { target = "wasm32-unknown-unknown" },
-		checkOnSave = { command = "clippy" }
-	}}
-})
-
-require("lspconfig").lua_ls.setup({
-	settings = { Lua = { diagnostics = { globals = { "vim" } } } }
-})
-
-require("lspconfig").clangd.setup({
-	cmd = {"clangd", "--background-index=false", "--header-insertion=never"},
-})
-
-lsp.setup()
+--local lsp = require("lsp-zero").preset({})
+--
+--lsp.on_attach(function(client, bufnr)
+--  vim.opt.signcolumn = "yes"
+--  -- see :help lsp-zero-keybindings
+--  lsp.default_keymaps({buffer = bufnr})
+--end)
+--
+--lsp.ensure_installed({
+--	"clangd",
+--	"rust_analyzer",
+--	"lua_ls",
+--})
+--
+--lsp.set_sign_icons({
+--	error = 'x',
+--	warn  = '!',
+--	hint  = '*',
+--	info  = '>'
+--})
+--
+--vim.diagnostic.config({
+--	virtual_text = false,
+--	update_in_insert = true,
+--})
+--
+--require("lspconfig").rust_analyzer.setup({
+--	settings = { ["rust-analyzer"] = {
+--		cargo = { target = "wasm32-unknown-unknown" },
+--		checkOnSave = { command = "clippy" }
+--	}}
+--})
+--
+--require("lspconfig").lua_ls.setup({
+--	settings = { Lua = { diagnostics = { globals = { "vim" } } } }
+--})
+--
+--require("lspconfig").clangd.setup({
+--	cmd = {"clangd", "--background-index=false", "--header-insertion=never"},
+--})
+--
+--lsp.setup()

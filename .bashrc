@@ -144,26 +144,31 @@ shopt -u progcomp
 stty -ixon
 
 export EDITOR=nvim
+export home='/mnt/c/Users/Abdulhadi'
+export wslhome='/mnt/wsl/shared'
 
-alias vi="nvim"
+alias vi="nvim --listen $HOME/.cache/nvim/server.pipe"
 alias du="du -sh"
 alias r="ranger"
 alias cdr="source ranger ranger"
+pause() { read -n1 -r -s; }
 
 # python
-#export PATH="$PATH:$HOME/.local/bin"
-#alias py="python3"
-#alias ipy="ipython"
-#alias python="python3"
+export PATH="$PATH:$HOME/.local/bin"
+alias py="python3 -q"
+alias ipy="ipython3"
+alias python="python3"
 
-## rust
-#. "$HOME/.cargo/env"
-#alias rs="evcxr"
-#
-## zig
-##export PATH="$PATH:/usr/local/zig-0.11.0"
+# rust
+. "$HOME/.cargo/env"
+alias rs="evcxr"
+
+# zig
+#export PATH="$PATH:/usr/local/zig-0.11.0"
 #export PATH="$PATH:/usr/local/zig-0.13.0"
-#
-## golang
-#export PATH="$PATH:/usr/local/go/bin"
-#export PATH="$PATH:$HOME/.go/bin"
+#export PATH="$PATH:/usr/local/zig-linux-x86_64-0.15.0-dev.386+2e35fdd03"
+export PATH="$PATH:$HOME/probe/zig/build/stage3/bin"
+
+# golang
+export PATH="$PATH:/usr/local/go/bin"
+export PATH="$PATH:$HOME/.go/bin"
